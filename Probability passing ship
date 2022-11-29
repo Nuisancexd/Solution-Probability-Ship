@@ -1,0 +1,118 @@
+#include <iostream>
+#include <random>
+#include <vector>
+
+std::mt19937 generator;
+std::random_device seed;
+
+std::vector<std::vector<int>> fill_matrix(std::vector<std::vector<int>> &sea, const int fill_symbol)
+{
+	for (int i = 0; i != sea.size(); ++i) {
+		for (int j = 0; j != sea.size(); ++j) {
+			sea[i][j] = fill_symbol;
+		}
+	}
+	return sea;
+}
+void generate_random_mines(std::vector<std::vector<int>> &sea,
+	const int elem_sea, const int elem_mines, int mines)
+{ 
+	generator.seed(seed());
+	std::uniform_int_distribution<int> dist(0, sea.size() - 1);
+	int count = 0;
+	int minesy;
+	int minesx;
+	for (int i = 0; i < sea.size(); i++)
+	{
+		minesy = dist(generator);
+		minesx = dist(generator);
+		if (count == mines)
+		{
+			count = 0;
+			break;
+		}
+		sea[minesx][minesy] = 0;
+		count++;
+	}
+}
+
+bool move_ship(std::vector<std::vector<int>>& sea,
+	const int end_symbol, const int elem_mines)
+{
+	int x = 0;
+	int y = 0;
+	generator.seed(seed());
+	std::uniform_int_distribution<int> dist(0, 1);
+	constexpr int movement_limit = 5000;
+	for (int i = 0; i < movement_limit; i++)
+	{
+		if (sea[x][y] == elem_mines) 
+		{
+			return false;
+		}
+		if (sea[x][y] == end_symbol)
+		{
+			return true;
+		}
+		int random = dist(generator);
+		if (x == sea.size() - 1) 
+		{
+			++y;
+			if (y == sea.size())
+			{
+				return true;
+			}
+			continue;
+		}
+		if (y == sea.size() - 1)
+		{
+			++x;
+			if (x == sea.size())
+			{
+				return true;
+			}
+			continue;
+		}
+		if (random == 0) 
+		{
+			++x;
+		}
+		else 
+		{
+			++y;
+		}
+	}
+	return false;
+}
+
+int main()
+{
+	setlocale(LC_CTYPE, "Russian");
+	std::vector<std::vector<int>> vec_sea(20, std::vector<int> (20));
+	const int water_symbol = 1;
+	const int mine_symbol = 0;
+	const int end_symbol = 2;
+	int mines = 6;
+	vec_sea[vec_sea.size() - 1][vec_sea.size() - 1] = end_symbol;
+	vec_sea[0][0] = water_symbol;
+
+	int tests = 10000;
+	int success = 0;
+	for(int i = 0; i < tests; i++)
+	{
+		fill_matrix(vec_sea, water_symbol);	
+		generate_random_mines(vec_sea, water_symbol, mine_symbol, mines);
+
+		if (move_ship(vec_sea, end_symbol, mine_symbol))
+		{
+			success++;
+		}
+	}
+	const float success_probability =
+		(static_cast<float>(success) / tests) * 100;
+	const float Succ = (success / tests) * 100;
+	std::cout << "Количество тестов: " << tests << std::endl;
+	std::cout << "Количество успешных: " << success << std::endl;
+	std::cout << "Вероятность что дойдет то дочки: " << success_probability
+		<< "%" << std::endl;
+}
